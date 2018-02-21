@@ -1,1 +1,4 @@
 target
+testdata/newcoicop.csv
+testdata/test-key.key
+testdata/test-key.pub
