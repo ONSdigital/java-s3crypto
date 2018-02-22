@@ -9,9 +9,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +23,8 @@ import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
@@ -46,14 +52,38 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
 	private RSAPrivateKey privKey;
+	private RSAPublicKey pubKey;
 	private final String ENCRYPTION_KEY_HEADER = "Pskencrypted";
 	private AmazonS3Client s3Client;
+	private final String NO_PRIVATE_KEY_MESSAGE = "you have not provided a private key and therefore do not have permission to complete this action";
 
 	public S3CryptoClient(ClientConfiguration clientConfiguration, RSAPrivateKey privKey) {
 		s3Client = new AmazonS3Client();
 		s3Client.builder().setClientConfiguration(clientConfiguration);
 		s3Client.builder().build();
+		
+		RSAPrivateCrtKey privk = (RSAPrivateCrtKey) privKey;
+		RSAPublicKeySpec publicKeySpec = new java.security.spec.RSAPublicKeySpec(privk.getModulus(),
+				privk.getPublicExponent());
+		KeyFactory keyFactory;
+		try {
+			keyFactory = KeyFactory.getInstance("RSA");
+			PublicKey pubKey = keyFactory.generatePublic(publicKeySpec);
+			this.pubKey = (RSAPublicKey) pubKey;
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
+		
 		this.privKey = privKey;
+	}
+	
+	public S3CryptoClient(ClientConfiguration clientConfiguration, RSAPublicKey pubKey) {
+		s3Client = new AmazonS3Client();
+		s3Client.builder().setClientConfiguration(clientConfiguration);
+		s3Client.builder().build();
+		this.pubKey = pubKey;
 	}
 
 	/**
@@ -311,25 +341,23 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 	}
 
 	private String encryptKey(byte[] psk) throws Exception {
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
 
-		cipher.init(Cipher.ENCRYPT_MODE, privKey);
+		cipher.init(Cipher.ENCRYPT_MODE, pubKey);
 		byte[] encodedKey = cipher.doFinal(psk);
 		return Hex.encodeHexString(encodedKey);
 	}
 
 	private byte[] decryptKey(String encryptedKey) throws Exception {
+		if (privKey == null) {
+			throw new Exception(NO_PRIVATE_KEY_MESSAGE);
+		}
+		
 		byte[] encodedKey = Hex.decodeHex(encryptedKey.toCharArray());
 
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
 
-		RSAPrivateCrtKey privk = (RSAPrivateCrtKey) privKey;
-		RSAPublicKeySpec publicKeySpec = new java.security.spec.RSAPublicKeySpec(privk.getModulus(),
-				privk.getPublicExponent());
-		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-		PublicKey pubKey = keyFactory.generatePublic(publicKeySpec);
-
-		cipher.init(Cipher.DECRYPT_MODE, pubKey);
+		cipher.init(Cipher.DECRYPT_MODE, privKey);
 		return cipher.doFinal(encodedKey);
 	}
 
