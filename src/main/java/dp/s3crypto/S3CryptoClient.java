@@ -81,6 +81,11 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
 		this.privKey = privKey;
 	}
+	
+	public S3CryptoClient(AmazonS3Client s3Client) {
+		this.s3Client = s3Client;
+		this.hasUserDefinedPSK = true;
+	}
 
 	public S3CryptoClient(ClientConfiguration clientConfiguration, RSAPublicKey pubKey) {
 		s3Client = new AmazonS3Client();
