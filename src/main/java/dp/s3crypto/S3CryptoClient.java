@@ -488,6 +488,8 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 		try {
 			InputStream content = obj.getObjectContent();
 			byte[] decodedContent = decryptObjectContent(psk, content);
+			
+			System.out.println(decodedContent.toString());
 
 			obj.setObjectContent(new ByteArrayInputStream(decodedContent));
 		} catch (Exception e) {
