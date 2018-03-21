@@ -23,6 +23,7 @@ import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
@@ -559,17 +560,13 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
 	private byte[] decryptObjectContent(byte[] psk, InputStream content) throws Exception {
 		SecretKeySpec secretKey = new SecretKeySpec(psk, "AES");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.DECRYPT_MODE, secretKey);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		CipherOutputStream cipherStream = new CipherOutputStream(out, cipher);
+		Cipher cipher = Cipher.getInstance("AES/OFB/NoPadding");
+		byte[] iv = new byte[cipher.getBlockSize()];
+		IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
-		byte[] b = IOUtils.toByteArray(content);
-
-		cipherStream.write(b);
-		cipherStream.close();
-
-		return b;
+		cipher.init(Cipher.DECRYPT_MODE, secretKey,ivParameterSpec);
+		
+		return cipher.doFinal(IOUtils.toByteArray(content));
 	}
 
 	private String getEncryptedKey(UploadPartRequest uploadPartRequest) {
