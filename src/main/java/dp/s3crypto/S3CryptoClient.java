@@ -545,17 +545,13 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
 	private byte[] encryptObjectContent(byte[] psk, InputStream content) throws Exception {
 		SecretKeySpec secretKey = new SecretKeySpec(psk, "AES");
-		Cipher cipher = Cipher.getInstance("AES");
-		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		CipherOutputStream cipherStream = new CipherOutputStream(out, cipher);
+		Cipher cipher = Cipher.getInstance("AES/OFB/NoPadding");
+		byte[] iv = new byte[cipher.getBlockSize()];
+		IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
-		byte[] b = IOUtils.toByteArray(content);
-
-		cipherStream.write(b);
-		cipherStream.close();
-
-		return b;
+		cipher.init(Cipher.ENCRYPT_MODE, secretKey,ivParameterSpec);
+		
+		return cipher.doFinal(IOUtils.toByteArray(content));
 	}
 
 	private byte[] decryptObjectContent(byte[] psk, InputStream content) throws Exception {
