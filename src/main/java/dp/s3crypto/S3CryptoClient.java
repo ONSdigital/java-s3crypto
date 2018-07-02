@@ -523,8 +523,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
     private byte[] encryptObjectContent(byte[] psk, InputStream content) throws Exception {
         SecretKeySpec secretKey = new SecretKeySpec(psk, "AES");
         Cipher cipher = Cipher.getInstance("AES/CFB/NoPadding");
-        byte[] iv = new byte[cipher.getBlockSize()];
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(psk);
 
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
 
@@ -534,8 +533,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
     private byte[] decryptObjectContent(byte[] psk, InputStream content) throws Exception {
         SecretKeySpec secretKey = new SecretKeySpec(psk, "AES");
         Cipher cipher = Cipher.getInstance("AES/CFB/NoPadding");
-        byte[] iv = new byte[cipher.getBlockSize()];
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(psk);
 
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
 
@@ -562,5 +560,4 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
         s3Client.deleteObject(completeMultipartUploadRequest.getBucketName(),
                 completeMultipartUploadRequest.getKey() + ".key");
     }
-
 }
