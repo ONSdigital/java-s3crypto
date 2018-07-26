@@ -84,7 +84,6 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
         }
 
         if (currChunk == null || this.currChunk.length == 0) {
-            System.out.println("decrypting a chunk");
             byte[] encryptedCurrentChunk = new byte[SIZE];
 
             int n = this.parentInputStream.read(encryptedCurrentChunk);
@@ -105,6 +104,8 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
         } else {
             this.currChunk = Arrays.copyOfRange(this.currChunk, 1, this.currChunk.length);
         }
+        
+        System.out.println((char) b);
         
         return b;
     }
