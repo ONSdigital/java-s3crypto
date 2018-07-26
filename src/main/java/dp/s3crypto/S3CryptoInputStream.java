@@ -24,6 +24,7 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
     }
 
     public int read(byte[] b) throws IOException {
+        System.out.println("in read method");
         if (this.lastChunk && currChunk.length == 0) {
             return -1;
         }
@@ -52,6 +53,10 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
             n = this.currChunk.length;
             this.currChunk = null;
         }
+        
+        System.out.println(b.toString());
+        System.out.println();
+        System.out.println(n);
 
         return n;
     }
