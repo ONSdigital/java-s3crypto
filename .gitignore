@@ -3,3 +3,4 @@ testdata/newcoicop.csv
 testdata/test-key.key
 testdata/test-key.pub
 s3crypto.iml
+.idea
