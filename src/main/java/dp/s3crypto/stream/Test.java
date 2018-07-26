@@ -41,7 +41,7 @@ public class Test {
                     done = true;
                     continue;
                 }
-                builder.append((char)n);
+                builder.append((char) n);
             }
             builder.append("\n");
             System.out.println(builder.toString());
