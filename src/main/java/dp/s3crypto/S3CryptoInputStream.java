@@ -44,11 +44,11 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
 
         int n = 0;
         if (this.currChunk.length >= b.length) {
-            b = Arrays.copyOf(currChunk, b.length);
+            b = Arrays.copyOf(this.currChunk, b.length);
             n = b.length;
             this.currChunk = Arrays.copyOfRange(this.currChunk, b.length, this.currChunk.length);
         } else {
-            b = this.currChunk;
+            b = Arrays.copyOf(this.currChunk, this.currChunk.length);
             n = this.currChunk.length;
             this.currChunk = null;
         }
