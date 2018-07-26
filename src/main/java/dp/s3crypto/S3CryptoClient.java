@@ -18,8 +18,11 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -46,6 +49,8 @@ import java.util.Random;
 
 @Component
 public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
+    
+    private final static Logger LOGGER = LoggerFactory.getLogger(S3CryptoClient.class);
 
     private RSAPrivateKey privKey;
     private RSAPublicKey pubKey;
@@ -443,7 +448,9 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
         try {
             byte[] psk = decryptKey(encodedKey);
             InputStream content = obj.getObjectContent();
+            LOGGER.info("about to decrypt object content");
             byte[] decodedContent = decryptObjectContent(psk, content);
+            LOGGER.info("decrypted object content");
 
             obj.setObjectContent(new ByteArrayInputStream(decodedContent));
         } catch (Exception e) {
@@ -466,7 +473,9 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
         S3Object obj = s3Client.getObject(getObjectRequest);
         try {
             InputStream content = obj.getObjectContent();
+            LOGGER.info("about to decrypt object content");
             byte[] decodedContent = decryptObjectContent(psk, content);
+            LOGGER.info("decrypted object content");
 
             obj.setObjectContent(new ByteArrayInputStream(decodedContent));
         } catch (Exception e) {
@@ -537,6 +546,8 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
 
+        LOGGER.info("about to copy content to byte array");
+        
         return cipher.doFinal(IOUtils.toByteArray(content));
     }
 
