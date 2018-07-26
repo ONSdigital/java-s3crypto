@@ -53,10 +53,6 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
             n = this.currChunk.length;
             this.currChunk = null;
         }
-        
-        System.out.println(b.toString());
-        System.out.println();
-        System.out.println(n);
 
         return n;
     }
@@ -83,7 +79,35 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
 
     @Override
     public int read() throws IOException {
-        return this.parentInputStream.read();
+        System.out.println("using byte by byte read");
+        if (this.lastChunk && currChunk.length == 0) {
+            return -1;
+        }
+
+        if (currChunk == null || this.currChunk.length == 0) {
+            byte[] encryptedCurrentChunk = new byte[SIZE];
+
+            int n = this.parentInputStream.read(encryptedCurrentChunk);
+            if (n == -1) {
+                return n;
+            }
+            if (n < SIZE) {
+                this.lastChunk = true;
+            }
+
+            this.currChunk = decryptObjectContent(psk, encryptedCurrentChunk);
+        }
+        
+        byte b = this.currChunk[0];
+        
+        if (this.currChunk.length == 1) {
+            this.currChunk = null;
+        } else {
+            this.currChunk = Arrays.copyOfRange(this.currChunk, 1, this.currChunk.length);
+        }
+        
+        return b;
     }
 
+    
 }
