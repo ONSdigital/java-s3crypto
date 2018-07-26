@@ -106,6 +106,8 @@ public class S3CryptoInputStream extends InputStream implements Closeable {
             this.currChunk = Arrays.copyOfRange(this.currChunk, 1, this.currChunk.length);
         }
         
+        System.out.println((char) b);
+        
         return b;
     }
 
