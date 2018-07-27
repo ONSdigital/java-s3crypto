@@ -28,6 +28,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -461,12 +462,17 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk) throws SdkClientException {
-
         S3Object obj = s3Client.getObject(getObjectRequest);
-        InputStream in = new S3CryptoInputStream3(obj.getObjectContent(), 5 * 1024 * 1025, psk);
-        obj.setObjectContent(in);
+        int size = 5 * 1024 * 1024;
 
-        return obj;
+        try (InputStream s3Stream = obj.getObjectContent()) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            IOUtils.copy(s3Stream, out);
+            obj.setObjectContent(new S3CryptoInputStream3(new ByteArrayInputStream(out.toByteArray()), size, psk));
+            return obj;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
