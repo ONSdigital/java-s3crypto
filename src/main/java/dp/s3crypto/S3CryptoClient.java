@@ -106,8 +106,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      */
     @Override
     public InitiateMultipartUploadResult initiateMultipartUpload(
-            InitiateMultipartUploadRequest initiateMultipartUploadRequest)
-            throws SdkClientException {
+            InitiateMultipartUploadRequest initiateMultipartUploadRequest) throws SdkClientException {
 
         if (!hasUserDefinedPSK) {
             byte[] psk = createPSK();
@@ -152,8 +151,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     @Override
-    public UploadPartResult uploadPart(UploadPartRequest uploadPartRequest)
-            throws SdkClientException {
+    public UploadPartResult uploadPart(UploadPartRequest uploadPartRequest) throws SdkClientException {
         String encodedKey = getEncryptedKey(uploadPartRequest);
         InputStream content = uploadPartRequest.getInputStream();
 
@@ -219,8 +217,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     @Override
-    public PutObjectResult putObject(String bucketName, String key, File file)
-            throws SdkClientException {
+    public PutObjectResult putObject(String bucketName, String key, File file) throws SdkClientException {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, file);
         return putObject(putObjectRequest);
     }
@@ -260,7 +257,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     public PutObjectResult putObjectWithPSK(String bucketName, String key, InputStream input, byte[] psk,
-                                            ObjectMetadata objectMetadata) throws SdkClientException {
+            ObjectMetadata objectMetadata) throws SdkClientException {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, input, objectMetadata);
         return putObjectWithPSK(putObjectRequest, psk);
     }
@@ -274,8 +271,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     @Override
-    public PutObjectResult putObject(PutObjectRequest putObjectRequest)
-            throws SdkClientException {
+    public PutObjectResult putObject(PutObjectRequest putObjectRequest) throws SdkClientException {
         byte[] psk = createPSK();
         try {
             String encodedKey = encryptKey(psk);
@@ -320,8 +316,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws SdkClientException
      * @throws AmazonServiceException
      */
-    public PutObjectResult putObjectWithPSK(PutObjectRequest putObjectRequest, byte[] psk)
-            throws SdkClientException {
+    public PutObjectResult putObjectWithPSK(PutObjectRequest putObjectRequest, byte[] psk) throws SdkClientException {
         try {
 
             InputStream content = putObjectRequest.getInputStream();
@@ -367,8 +362,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws SdkClientException
      * @throws AmazonServiceException
      */
-    public S3Object getObjectWithPSK(String bucketName, String key, byte[] psk)
-            throws SdkClientException {
+    public S3Object getObjectWithPSK(String bucketName, String key, byte[] psk) throws SdkClientException {
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, key);
         return getObjectWithPSK(getObjectRequest, psk);
     }
@@ -382,8 +376,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     @Override
-    public ObjectMetadata getObject(GetObjectRequest getObjectRequest, File destinationFile)
-            throws SdkClientException {
+    public ObjectMetadata getObject(GetObjectRequest getObjectRequest, File destinationFile) throws SdkClientException {
         S3Object s3Obj = getObject(getObjectRequest);
 
         try {
@@ -461,17 +454,11 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws SdkClientException
      * @throws AmazonServiceException
      */
-    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk)
-            throws SdkClientException {
-        S3Object obj = s3Client.getObject(getObjectRequest);
-        try {
-            InputStream content = obj.getObjectContent();
-            byte[] decodedContent = decryptObjectContent(psk, content);
+    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk) throws SdkClientException {
 
-            obj.setObjectContent(new ByteArrayInputStream(decodedContent));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        S3Object obj = s3Client.getObject(getObjectRequest);
+        S3CryptoInputStream cryptois = new S3CryptoInputStream(obj.getObjectContent(), psk);
+        obj.setObjectContent(cryptois);
 
         return obj;
     }
@@ -485,8 +472,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      */
     @Override
     public CompleteMultipartUploadResult completeMultipartUpload(
-            CompleteMultipartUploadRequest completeMultipartUploadRequest)
-            throws SdkClientException {
+            CompleteMultipartUploadRequest completeMultipartUploadRequest) throws SdkClientException {
         if (!hasUserDefinedPSK) {
             removeEncryptedKey(completeMultipartUploadRequest);
         }
