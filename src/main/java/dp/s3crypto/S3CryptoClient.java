@@ -18,7 +18,6 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -262,7 +261,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws AmazonServiceException
      */
     public PutObjectResult putObjectWithPSK(String bucketName, String key, InputStream input, byte[] psk,
-            ObjectMetadata objectMetadata) throws SdkClientException {
+                                            ObjectMetadata objectMetadata) throws SdkClientException {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, input, objectMetadata);
         return putObjectWithPSK(putObjectRequest, psk);
     }
@@ -464,7 +463,7 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 /*    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk) throws SdkClientException {
 
         S3Object obj = s3Client.getObject(getObjectRequest);
-        S3CryptoInputStream2 in = new S3CryptoInputStream2(obj.getObjectContent(), 5 * 1024 * 1025, psk);
+        InputStream in = new S3CryptoInputStream3(obj.getObjectContent(), 5 * 1024 * 1025, psk);
         obj.setObjectContent(in);
 
         return obj;

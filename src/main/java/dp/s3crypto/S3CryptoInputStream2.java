@@ -14,15 +14,15 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
     private byte[] current;
     private int index;
     private int endIndex;
-    private int chunkSize;
+    private int blockSize;
     private boolean isLast;
     private byte[] psk;
 
-    public S3CryptoInputStream2(InputStream is, int chunkSize, byte[] psk) {
+    public S3CryptoInputStream2(InputStream is, int blockSize, byte[] psk) {
         this.wrappedInputStream = is;
         this.index = 0;
-        this.chunkSize = chunkSize;
-        this.endIndex = chunkSize;
+        this.blockSize = blockSize;
+        this.endIndex = blockSize;
         this.isLast = false;
         this.psk = psk;
     }
@@ -43,21 +43,25 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
     }
 
     public int read(byte[] b) throws IOException {
-        System.out.println("==> loading next chunk from wrapped reader");
-        int n = this.wrappedInputStream.read(b);
+        byte[] encrypted = new byte[blockSize];
+        int n = wrappedInputStream.read(encrypted); // read the next block of encrypted data.
 
         if (n == -1) {
-            return n;
+            return n; // its done so return -1.
         }
 
-        b = decryptObjectContent(psk, b);
+
+        byte[] decrypted = decryptObjectContent(psk, encrypted);
+        for (int i = 0; i < b.length; i++) {
+            b[i] = decrypted[i];
+        }
         return n;
     }
 
     @Override
     public int read() throws IOException {
         if (this.current == null) {
-            byte[] newChunk = new byte[this.chunkSize];
+            byte[] newChunk = new byte[this.blockSize];
             int n = read(newChunk);
             this.index = 0;
 
@@ -66,7 +70,7 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
                 return n;
             }
 
-            if (n < chunkSize) {
+            if (n < blockSize) {
                 newChunk = Arrays.copyOfRange(newChunk, 0, n);
                 this.endIndex = newChunk.length;
                 this.current = newChunk;
@@ -82,7 +86,7 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
                 return -1;
             }
 
-            byte[] newChunk = new byte[this.chunkSize];
+            byte[] newChunk = new byte[this.blockSize];
             int n = read(newChunk);
             this.index = 0;
 
@@ -91,7 +95,7 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
                 return n;
             }
 
-            if (n < chunkSize) {
+            if (n < blockSize) {
                 System.out.println("==> loaded chunk smaller than chunk limit");
                 newChunk = Arrays.copyOfRange(newChunk, 0, n);
                 this.endIndex = newChunk.length;
@@ -106,6 +110,7 @@ public class S3CryptoInputStream2 extends InputStream implements Closeable {
         this.index++;
         return b;
     }
+
 
     @Override
     public void close() throws IOException {
