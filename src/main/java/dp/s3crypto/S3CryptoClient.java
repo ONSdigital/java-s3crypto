@@ -460,19 +460,19 @@ public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
      * @throws SdkClientException
      * @throws AmazonServiceException
      */
-/*    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk) throws SdkClientException {
+    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk) throws SdkClientException {
 
         S3Object obj = s3Client.getObject(getObjectRequest);
         InputStream in = new S3CryptoInputStream3(obj.getObjectContent(), 5 * 1024 * 1025, psk);
         obj.setObjectContent(in);
 
         return obj;
-    }*/
+    }
 
-    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk)
+/*    public S3Object getObjectWithPSK(GetObjectRequest getObjectRequest, byte[] psk)
             throws SdkClientException {
         return s3Client.getObject(getObjectRequest);
-    }
+    }*/
 
     /**
      * Wraps the SDK method by removing the previously stored encrypted PSK

@@ -77,7 +77,7 @@ public class S3CryptoInputStream3 extends InputStream implements Closeable {
         }
 
         int n = decryptedBytes.read();
-        if (n == 1) { // current block is empty...
+        if (n == -1) { // current block is empty...
             byte[] next = new byte[blockSize];
             if (read(next) == -1) { // attempt to read in another block.
                 isLast = true;
