@@ -20,7 +20,6 @@ import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -44,7 +43,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-@Component
 public class S3CryptoClient extends AmazonS3Client implements S3Crypto {
 
     private RSAPrivateKey privKey;
